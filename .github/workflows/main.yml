@@ -1,34 +1,29 @@
 name: Upstream Sync
-
 permissions:
-    contents: write
-
+  contents: write
 on:
-    schedule:
-        - cron: "0 0 * * *"
-    workflow_dispatch:
-
+  schedule:
+    # UTC 16点 = 北京时间 0点，每日凌晨自动同步
+    - cron: "0 16 * * *"
+  workflow_dispatch:
 jobs:
-    sync_with_upstream:
-        name: Sync with Upstream
-        runs-on: ubuntu-latest
-        if: ${{ github.event.repository.fork }}
-
-        steps:
-            - name: Checkout target repo
-              uses: actions/checkout@v3
-
-            - name: Sync Upstream
-              uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
-              with:
-                  target_repo_token: ${{ secrets.GITHUB_TOKEN }}
-                  upstream_sync_repo: router-for-me/CLIProxyAPI
-                  upstream_sync_branch: main
-                  target_sync_branch: main
-                  test_mode: false
-
-            - name: Check for Failure
-              if: failure()
-              run: |
-                  echo "[Error] Due to a change in the workflow file of the upstream repository, GitHub has automatically suspended the scheduled automatic update. You need to manually sync your fork."
-                  exit 1
+  sync_with_upstream:
+    name: Sync with Upstream
+    runs-on: ubuntu-latest
+    if: ${{ github.event.repository.fork }}
+    steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+      - name: Sync Upstream
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
+        with:
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          upstream_sync_repo: router-for-me/CLIProxyAPI
+          upstream_sync_branch: main
+          target_sync_branch: main
+          test_mode: false
+      - name: Check for Failure
+        if: failure()
+        run: |
+          echo "[Error] 同步失败，存在代码冲突，请手动同步fork。"
+          exit 1
